@@ -12,11 +12,10 @@ app.get("/", (req, res) => {
   res.json({ message: "ok" });
 });
 
-app.use("/programming-languages", programmingLanguagesRouter);
 app.use("/fb", facebookCallbackRouter);
 /* Error handler middleware */
 app.use((err, req, res, next) => {
-  const statusCode = err.statusCode || 500;
+  const statusCode = 400;
   console.error(err.message, err.stack);
   res.status(statusCode).json({ message: err.message });
 
