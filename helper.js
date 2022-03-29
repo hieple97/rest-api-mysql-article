@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 function getOffset(currentPage = 1, listPerPage) {
   return (currentPage - 1) * [listPerPage];
 }
@@ -6,7 +7,7 @@ function base64decode(data) {
     data += '=';
   }
   data = data.replace(/-/g, '+').replace(/_/g, '/');
-  return new Buffer(data, 'base64').toString('utf-8');
+  return Buffer.from(data, 'base64').toString('utf-8');
 }
 function emptyOrRows(rows) {
   if (!rows) {

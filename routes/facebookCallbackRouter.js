@@ -19,10 +19,10 @@ router.get("/deletion_status", async function (req, res, next) {
 router.post("/data_deletion", async function (req, res, next) {
   try {
     console.log("BODY", req.body);
-    if (req.body || req.body.signedRequest) {
+    if (!req.body || !req.body.signed_request) {
       throw Error('Missing signedRequest in body!');
     }
-    const signedRequest = req.body.signedRequest;
+    const signedRequest = req.body.signed_request;
     let encoded_data = signedRequest.split('.', 2);
     // decode the data
     let sig = encoded_data[0];
@@ -40,7 +40,7 @@ router.post("/data_deletion", async function (req, res, next) {
     res.type('json')
     res.send(`{ url: '${url}', confirmation_code: '${getConfirmationCodeFacebook()}' }`)
   } catch (err) {
-    console.error(`Error while creating programming language`, err.message);
+    console.error(err.message);
     next(err);
   }
 });
