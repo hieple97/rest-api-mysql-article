@@ -18,7 +18,6 @@ router.get("/deletion_status", async function (req, res, next) {
 /* POST programming language */
 router.post("/data_deletion", async function (req, res, next) {
   try {
-    console.log("BODY", req.body);
     if (!req.body || !req.body.signed_request) {
       throw Error('Missing signedRequest in body!');
     }
@@ -34,11 +33,15 @@ router.post("/data_deletion", async function (req, res, next) {
     let expected_sig = crypto.createHmac('sha256', CLIENT_SECRET).update(encoded_data[1]).digest('base64').replace(/\+/g, '-').replace(/\//g, '_').replace('=', '');
     if (sig !== expected_sig) {
       throw Error('Invalid signature: ' + sig + '. Expected ' + expected_sig);
-    }
-    console.log({ data });
+    };
+    const userId = data.user_id;
+    console.log({ userId });
+    // delete data user here;
     const url = 'https://' + req.get('host') + '/fb/deletion_status';
-    res.type('json')
-    res.send(`{ url: '${url}', confirmation_code: '${getConfirmationCodeFacebook()}' }`)
+    const confirmationCode = getConfirmationCodeFacebook();
+    console.log({ url, confirmationCode });
+    res.type('json');
+    res.send(`{ url: '${url}', confirmation_code: '${confirmationCode}' }`);
   } catch (err) {
     console.error(err.message);
     next(err);
