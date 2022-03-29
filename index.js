@@ -10,7 +10,12 @@ const facebookCallbackRouter = require("./routes/facebookCallbackRouter");
 app.use(express.json());
 app.use(express.urlencoded());
 app.use(cors());
-app.use(session({ secret: process.env.SECRET_SESSION }));
+app.use(session(
+  {
+    secret: process.env.SECRET_SESSION,
+    cookie: { httpOnly: true }
+  }
+));
 app.use(passport.initialize());
 app.use(passport.session());
 passport.serializeUser(function (user, done) {
@@ -24,10 +29,12 @@ passport.use(new facebookStrategy({
   clientID: process.env.CLIENT_ID,
   clientSecret: process.env.CLIENT_SECRET,
   callbackURL: `${process.env.DOMAIN}/auth/facebook/callback`,
-  profileFields: ['id', 'displayName', 'name', 'gender', 'picture.type(large)', 'email']
-
+  profileFields: ['id', 'displayName', 'name', 'gender', 'picture.type(large)', 'email'],
+  passReqToCallback: true
 },// facebook will send back the token and profile
-  function (token, refreshToken, profile, done) {
+  function (req, accessToken, refreshToken, params, profile, done) {
+    const expiration = params.expires_in * 1000;
+    req.session.cookie.expires = new Date(Date.now() + expiration);
     return done(null, profile);
   }));
 
