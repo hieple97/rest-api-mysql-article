@@ -8,7 +8,7 @@ router.get("/deletion_status", async function (req, res, next) {
   try {
     const code = req.query.code;
     // do something;
-    res.json({ message: 'Your information has been removed from our database.' });
+    res.json({ message: 'Your information has been removed from our database.', code });
   } catch (err) {
     console.error(`Error while getting programming languages `, err.message);
     next(err);
@@ -37,7 +37,7 @@ router.post("/data_deletion", async function (req, res, next) {
     const userId = data.user_id;
     console.log({ userId });
     // delete data user here;
-    const url = 'https://' + req.get('host') + '/fb/deletion_status';
+    const url = 'https://' + req.get('host') + '/facebook/deletion_status';
     const confirmationCode = getConfirmationCodeFacebook();
     console.log({ url, confirmationCode });
     res.type('json');
