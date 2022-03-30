@@ -8,12 +8,53 @@ const app = express();
 const port = process.env.PORT || 8888;
 const facebookCallbackRouter = require("./routes/facebookCallbackRouter");
 app.use(express.json());
-app.use(express.urlencoded());
-app.use(cors());
+// app.use(express.urlencoded());
+app.disable("X-Powered-By");
+// app.set("trust proxy", 1);
+// app.use(cors({ origin: process.env.ACCEPTED_DOMAIN, credentials: true, methods: "GET, POST, PUT, DELETE" }));
+app.use(cors({ origin: '*', credentials: true, methods: "GET, POST, PUT, DELETE" }));
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header("Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-HTTP-Method-Override, Set-Cookie, Cookie");
+  next();
+});
+// app.use(function (req, res, next) {
+//   res.header("Access-Control-Allow-Credentials", true);
+//   res.header("Access-Control-Allow-Origin", process.env.ACCEPTED_DOMAIN);
+//   res.header("Access-Control-Allow-Headers",
+//     "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-HTTP-Method-Override, Set-Cookie, Cookie");
+//   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+//   next();
+// });
+// app.use(express.static('public'));
+// app.set('views', './views');
+// app.set('view engine', 'ejs');
+// app.use(session(
+//   {
+//     name: "auth_session",
+//     secret: process.env.SECRET_SESSION,
+//     resave: true,
+//     rolling: false,
+//     saveUninitialized: false,
+//     unset: "destroy",
+//     cookie: {
+//       sameSite: "none",
+//       secure: true,
+//       httpOnly: true,
+//       maxAge: 8600000
+//     },
+//   }
+// ));
 app.use(session(
   {
+    name: "auth_session",
     secret: process.env.SECRET_SESSION,
-    cookie: { httpOnly: true }
+    cookie: { httpOnly: true },
+    resave: true,
+    rolling: false,
+    saveUninitialized: false,
+    unset: "destroy",
   }
 ));
 app.use(passport.initialize());
@@ -37,17 +78,16 @@ passport.use(new facebookStrategy({
     req.session.cookie.expires = new Date(Date.now() + expiration);
     return done(null, profile);
   }));
-
 app.get("/", (req, res) => {
-  res.json({ message: "ok" });
+  res.json({ message: 'sucess' })
 });
 app.get('/auth/facebook', passport.authenticate('facebook', { scope: 'email' }));
 
 app.get('/auth/facebook/callback',
   passport.authenticate('facebook', {
-    successRedirect: '/auth/facebook/profile',
-    failureRedirect: '/login'
-  }));
+    successRedirect: '/auth/facebook/profile'
+  })
+);
 
 app.use("/facebook", facebookCallbackRouter);
 
