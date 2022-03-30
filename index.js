@@ -100,6 +100,8 @@ app.use((err, req, res, next) => {
 
 app.listen(port, async () => {
   console.log(`Example app listening at http://localhost:${port}`);
-  const conn = await connection();// connect to db
-  await initData(conn);
+  if (process.env.NODE_ENV === 'production') {
+    const conn = await connection();// connect to db
+    await initData(conn);
+  }
 });
