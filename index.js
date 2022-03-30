@@ -1,24 +1,26 @@
 require('dotenv').config();
 const express = require("express");
 const passport = require('passport');
-const facebookStrategy = require('passport-facebook').Strategy;
 const session = require('express-session');
 const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 8888;
 const facebookCallbackRouter = require("./routes/facebookCallbackRouter");
+const { connection, initData } = require('./config/db');
+const initPassportFacebook = require('./services/passportService');
 app.use(express.json());
 // app.use(express.urlencoded());
 app.disable("X-Powered-By");
 // app.set("trust proxy", 1);
 // app.use(cors({ origin: process.env.ACCEPTED_DOMAIN, credentials: true, methods: "GET, POST, PUT, DELETE" }));
-app.use(cors({ origin: '*', credentials: true, methods: "GET, POST, PUT, DELETE" }));
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header("Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-HTTP-Method-Override, Set-Cookie, Cookie");
-  next();
-});
+app.use(cors());
+// app.use(cors({ origin: '*', credentials: true, methods: "GET, POST, PUT, DELETE" }));
+// app.use((req, res, next) => {
+//   res.header('Access-Control-Allow-Origin', '*');
+//   res.header("Access-Control-Allow-Headers",
+//     "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-HTTP-Method-Override, Set-Cookie, Cookie");
+//   next();
+// });
 // app.use(function (req, res, next) {
 //   res.header("Access-Control-Allow-Credentials", true);
 //   res.header("Access-Control-Allow-Origin", process.env.ACCEPTED_DOMAIN);
@@ -51,33 +53,13 @@ app.use(session(
     name: "auth_session",
     secret: process.env.SECRET_SESSION,
     cookie: { httpOnly: true },
-    resave: true,
-    rolling: false,
-    saveUninitialized: false,
-    unset: "destroy",
+    resave: false,
+    saveUninitialized: true,
   }
 ));
 app.use(passport.initialize());
 app.use(passport.session());
-passport.serializeUser(function (user, done) {
-  done(null, user);
-});
-passport.deserializeUser(function (user, done) {
-  done(null, user);
-});
-passport.use(new facebookStrategy({
-  // pull in our app id and secret from our auth.js file
-  clientID: process.env.CLIENT_ID,
-  clientSecret: process.env.CLIENT_SECRET,
-  callbackURL: `${process.env.DOMAIN}/auth/facebook/callback`,
-  profileFields: ['id', 'displayName', 'name', 'gender', 'picture.type(large)', 'email'],
-  passReqToCallback: true
-},// facebook will send back the token and profile
-  function (req, accessToken, refreshToken, params, profile, done) {
-    const expiration = params.expires_in * 1000;
-    req.session.cookie.expires = new Date(Date.now() + expiration);
-    return done(null, profile);
-  }));
+initPassportFacebook();
 app.get("/", (req, res) => {
   res.json({ message: 'sucess' })
 });
@@ -116,6 +98,8 @@ app.use((err, req, res, next) => {
   return;
 });
 
-app.listen(port, () => {
+app.listen(port, async () => {
   console.log(`Example app listening at http://localhost:${port}`);
+  const conn = await connection();// connect to db
+  await initData(conn);
 });
