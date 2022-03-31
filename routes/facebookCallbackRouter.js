@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const crypto = require('crypto');
+const axios = require('axios');
 const { base64decode, getConfirmationCodeFacebook } = require("../helper");
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 /* GET programming languages. */
@@ -11,6 +12,24 @@ router.get("/deletion_status", async function (req, res, next) {
     res.json({ message: 'Your information has been removed from our database.', code });
   } catch (err) {
     console.error(`Error while getting programming languages `, err.message);
+    next(err);
+  }
+});
+
+router.post("/login", async function (req, res, next) {
+  try {
+    const { userID, accessToken } = req.body;
+    const urlGraphFacebook = `https://graph.facebook.com/v13.0/me?access_token=${accessToken}&fields=id,name,last_name,first_name,email&method=get`;
+    const config = {
+      method: 'GET',
+      url: urlGraphFacebook
+    };
+    const response = await axios(config);
+    const responseJson = await response.data;
+    console.log(response);
+    return res.json(responseJson);
+  } catch (err) {
+    console.error(err.message);
     next(err);
   }
 });
