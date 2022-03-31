@@ -24,6 +24,9 @@ router.get("/deletion_status", async function (req, res, next) {
 
 router.post("/upsert_user", async function (req, res, next) {
   try {
+    if (req.body || req.body.accessToken) {
+      throw Error('Missing accessToken in body');
+    }
     const { accessToken } = req.body;
     const urlGraphFacebook = `https://graph.facebook.com/v13.0/me?access_token=${accessToken}&fields=id,name,last_name,first_name,email&method=get`;
     const config = {
