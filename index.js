@@ -5,7 +5,7 @@ const app = express();
 const port = process.env.PORT || 8888;
 const facebookRouter = require("./routes/facebookRouter");
 const { connection, initData } = require('./config/db');
-app.use(express.json());
+app.use(express.urlencoded());
 app.disable("X-Powered-By");
 app.use(cors());
 app.get("/", (req, res) => {
