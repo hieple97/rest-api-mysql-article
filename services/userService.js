@@ -1,44 +1,24 @@
 const db = require("../config/db");
-const helper = require("../helper");
-const config = require("../config");
-async function getMultiple(page = 1) {
-    const offset = helper.getOffset(page, config.listPerPage);
-    const rows = await db.query(
-        `SELECT id, name, released_year, githut_rank, pypl_rank, tiobe_rank 
-    FROM programming_languages LIMIT ${offset},${config.listPerPage}`
-    );
-    const data = helper.emptyOrRows(rows);
-    const meta = { page };
+const connPromise = db.connection();
 
-    return {
-        data,
-        meta,
-    };
-}
-
-async function create(programmingLanguage) {
-    const result = await db.query(
-        `INSERT INTO programming_languages 
-    (name, released_year, githut_rank, pypl_rank, tiobe_rank) 
-    VALUES 
-    ("${programmingLanguage.name}", ${programmingLanguage.released_year}, ${programmingLanguage.githut_rank}, ${programmingLanguage.pypl_rank}, ${programmingLanguage.tiobe_rank})`
-    );
-
-    let message = "Error in creating programming language";
-
-    if (result.affectedRows) {
-        message = "Programming language created successfully";
+async function getUserBySocialId(id, isEnabled = true, type) {
+    const [rows] = await connPromise.then(conn => conn.execute(
+        `SELECT id, facebook_id, google_id, apple_id, last_name, first_name, email FROM user_social WHERE facebook_id = ${id} and status = ${isEnabled}`
+    ));
+    if (rows) {
+        return rows[0];
     }
-
-    return { message };
+    return null;
 }
 
-async function updateStatusUser(email) {
+
+
+async function updateStatusUser(type, social_id) {
     const conn = await db.connection();
     const result = await conn.execute(
         `UPDATE user_social 
     SET status = 0
-    WHERE email=${email}`
+    WHERE facebook_id=${social_id}`
     );
 
     let message = "Error in updating status user";
@@ -81,8 +61,7 @@ async function remove(id) {
 }
 
 module.exports = {
-    getMultiple,
-    create,
+    getUserBySocialId,
     updateStatusUser,
     remove,
     upsertUser
