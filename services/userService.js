@@ -1,5 +1,5 @@
 const db = require("../config/db");
-const connPromise = db.connection();
+// const connPromise = db.connection();
 
 async function getUserBySocialId(id, isEnabled = true, type) {
     const [rows] = await connPromise.then(conn => conn.execute(
