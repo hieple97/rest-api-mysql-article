@@ -5,7 +5,7 @@ const config = {
     password: process.env.PASSWORD_DB,
     database: process.env.NAME_DB,
     multipleStatements: true,
-    port: 3307
+    port: process.env.PORT_DB,
   },
 };
 

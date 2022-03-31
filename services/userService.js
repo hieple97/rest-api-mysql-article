@@ -1,7 +1,6 @@
 const db = require("../config/db");
 const helper = require("../helper");
 const config = require("../config");
-
 async function getMultiple(page = 1) {
     const offset = helper.getOffset(page, config.listPerPage);
     const rows = await db.query(
@@ -34,18 +33,34 @@ async function create(programmingLanguage) {
     return { message };
 }
 
-async function update(id, programmingLanguage) {
-    const result = await db.query(
-        `UPDATE programming_languages 
-    SET name="${programmingLanguage.name}", released_year=${programmingLanguage.released_year}, githut_rank=${programmingLanguage.githut_rank}, 
-    pypl_rank=${programmingLanguage.pypl_rank}, tiobe_rank=${programmingLanguage.tiobe_rank} 
-    WHERE id=${id}`
+async function updateStatusUser(email) {
+    const conn = await db.connection();
+    const result = await conn.execute(
+        `UPDATE user_social 
+    SET status = 0
+    WHERE email=${email}`
     );
 
-    let message = "Error in updating programming language";
+    let message = "Error in updating status user";
 
     if (result.affectedRows) {
-        message = "Programming language updated successfully";
+        message = "Status user updated successfully";
+    }
+
+    return { message };
+}
+
+async function upsertUser(type, data) {
+    const { last_name, first_name, email, facebook_id } = data;
+    const conn = await db.connection();
+    const result = await conn.execute(
+        `INSERT INTO user_social (facebook_id,last_name,first_name,email) VALUES("${facebook_id}","${last_name}","${first_name}","${email}") ON DUPLICATE KEY UPDATE facebook_id = "${type.facebook_id}", email = "${type.email}" `
+    );
+
+    let message = "Error in upsert user";
+
+    if (result.affectedRows) {
+        message = "User upsert successfully";
     }
 
     return { message };
@@ -53,7 +68,7 @@ async function update(id, programmingLanguage) {
 
 async function remove(id) {
     const result = await db.query(
-        `DELETE FROM programming_languages WHERE id=${id}`
+        `DELETE FROM programming_languages WHERE id = ${id} `
     );
 
     let message = "Error in deleting programming language";
@@ -68,6 +83,7 @@ async function remove(id) {
 module.exports = {
     getMultiple,
     create,
-    update,
+    updateStatusUser,
     remove,
+    upsertUser
 };
