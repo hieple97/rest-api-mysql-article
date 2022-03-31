@@ -41,7 +41,7 @@ router.post("/upsert_user", async function (req, res, next) {
 /* POST programming language */
 router.post("/data_deletion", async function (req, res, next) {
   try {
-    console.log("BODY", req.body);
+    console.log("BODY", req);
     if (!req.body || !req.body.signed_request) {
       throw Error('Missing signedRequest in body!');
     }
