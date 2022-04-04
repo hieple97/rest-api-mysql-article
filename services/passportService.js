@@ -20,6 +20,6 @@ const initPassportFacebook = () => {
     passport.deserializeUser(function (user, done) {
         done(null, user);
     });
-}
+};
 
 module.exports = initPassportFacebook

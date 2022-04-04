@@ -1,92 +1,62 @@
 require('dotenv').config();
+const cookieSession = require("cookie-session");
 const express = require("express");
 const passport = require('passport');
 const session = require('express-session');
+const cookieParser = require("cookie-parser");
 const cors = require('cors');
+const keys = require("./config/keys");
 const app = express();
 const port = process.env.PORT || 8888;
-const facebookCallbackRouter = require("./routes/facebookCallbackRouter");
+const authRouter = require("./routes/auth-routes");
 const { connection, initData } = require('./config/db');
 const initPassportFacebook = require('./services/passportService');
-app.use(express.json());
-// app.use(express.urlencoded());
-app.disable("X-Powered-By");
-// app.set("trust proxy", 1);
-// app.use(cors({ origin: process.env.ACCEPTED_DOMAIN, credentials: true, methods: "GET, POST, PUT, DELETE" }));
-app.use(cors());
-// app.use(cors({ origin: '*', credentials: true, methods: "GET, POST, PUT, DELETE" }));
-// app.use((req, res, next) => {
-//   res.header('Access-Control-Allow-Origin', '*');
-//   res.header("Access-Control-Allow-Headers",
-//     "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-HTTP-Method-Override, Set-Cookie, Cookie");
-//   next();
-// });
-// app.use(function (req, res, next) {
-//   res.header("Access-Control-Allow-Credentials", true);
-//   res.header("Access-Control-Allow-Origin", process.env.ACCEPTED_DOMAIN);
-//   res.header("Access-Control-Allow-Headers",
-//     "Origin, X-Requested-With, Content-Type, Accept, Authorization, X-HTTP-Method-Override, Set-Cookie, Cookie");
-//   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
-//   next();
-// });
-// app.use(express.static('public'));
-// app.set('views', './views');
-// app.set('view engine', 'ejs');
-// app.use(session(
-//   {
-//     name: "auth_session",
-//     secret: process.env.SECRET_SESSION,
-//     resave: true,
-//     rolling: false,
-//     saveUninitialized: false,
-//     unset: "destroy",
-//     cookie: {
-//       sameSite: "none",
-//       secure: true,
-//       httpOnly: true,
-//       maxAge: 8600000
-//     },
-//   }
-// ));
-app.use(session(
-  {
-    name: "auth_session",
-    secret: process.env.SECRET_SESSION,
-    cookie: { httpOnly: true },
-    resave: false,
-    saveUninitialized: true,
-  }
-));
+app.use(
+  cookieSession({
+    name: "session",
+    keys: [keys.COOKIE_KEY],
+    maxAge: 24 * 60 * 60 * 100
+  })
+);
+// parse cookies
+app.use(cookieParser());
+// initalize passport
 app.use(passport.initialize());
+// deserialize cookie from the browser
 app.use(passport.session());
-initPassportFacebook();
-app.get("/", (req, res) => {
-  res.json({ message: 'sucess' })
-});
-app.get('/auth/facebook', passport.authenticate('facebook', { scope: 'email' }));
-
-app.get('/auth/facebook/callback',
-  passport.authenticate('facebook', {
-    successRedirect: '/auth/facebook/profile'
+// set up cors to allow us to accept requests from our client
+app.use(
+  cors({
+    origin: process.env.CLIENT_HOME_PAGE_URL, // allow to server to accept request from different origin
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    credentials: true // allow session cookie from browser to pass through
   })
 );
 
-app.use("/facebook", facebookCallbackRouter);
+// init passport facebook
+initPassportFacebook();
 
-app.get('/auth/facebook/profile', isLoggedIn, function (req, res) {
-  res.json(req.user);
+app.use('/auth', authRouter);
+
+const authCheck = (req, res, next) => {
+  if (!req.user) {
+    res.status(401).json({
+      authenticated: false,
+      message: "user has not been authenticated"
+    });
+  } else {
+    next();
+  }
+};
+
+app.get("/", authCheck, (req, res) => {
+  res.status(200).json({
+    authenticated: true,
+    message: "user successfully authenticated",
+    user: req.user,
+    cookies: req.cookies
+  });
 });
-
-app.get('/auth/logout', function (req, res) {
-  req.logout();
-  res.redirect('/');
-});
-
-// route middleware to make sure
-function isLoggedIn(req, res, next) {
-  if (req.isAuthenticated()) return next();
-  res.redirect('/');
-}
 
 
 /* Error handler middleware */
@@ -100,8 +70,8 @@ app.use((err, req, res, next) => {
 
 app.listen(port, async () => {
   console.log(`Example app listening at http://localhost:${port}`);
-  if (process.env.NODE_ENV === 'production') {
-    const conn = await connection();// connect to db
-    await initData(conn);
-  }
+  // if (process.env.NODE_ENV === 'production') {
+  //   const conn = await connection();// connect to db
+  //   await initData(conn);
+  // }
 });
