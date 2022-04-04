@@ -10,8 +10,9 @@ const initPassportFacebook = () => {
         passReqToCallback: true
     },// facebook will send back the token and profile
         function (req, accessToken, refreshToken, params, profile, done) {
-            const expiration = params.expires_in * 1000;
-            req.session.cookie.expires = new Date(Date.now() + expiration);
+            console.log({
+                accessToken, refreshToken, params, profile
+            });
             return done(null, profile);
         }));
     passport.serializeUser(function (user, done) {
