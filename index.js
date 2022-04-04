@@ -56,7 +56,6 @@ app.get("/", authCheck, (req, res) => {
   });
 });
 
-app.use("/facebook", facebookRouter);
 
 /* Error handler middleware */
 app.use((err, req, res, next) => {
