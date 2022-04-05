@@ -7,8 +7,8 @@ const cors = require('cors');
 const keys = require("./config/keys");
 const app = express();
 const port = process.env.PORT || 8888;
-const authRouter = require("./routes/auth-routes");
-const initPassportFacebook = require('./services/passportService');
+const authRoute = require("./routes/auth-route");
+const initPassportFacebook = require('./controllers/passport-controllers/passport-facebook-controller');
 app.use(
   cookieSession({
     name: "session",
@@ -34,7 +34,7 @@ app.use(
 // init passport facebook
 initPassportFacebook();
 
-app.use('/auth', authRouter);
+app.use('/auth', authRoute);
 
 const authCheck = (req, res, next) => {
   if (!req.user) {

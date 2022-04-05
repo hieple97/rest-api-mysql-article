@@ -1,9 +1,14 @@
 const db = require("../config/db");
 // const connPromise = db.connection();
-
+const typeMap = {
+    facebook: "facebook_id",
+    google: "google_id",
+    apple: "apple_id"
+};
 async function getUserBySocialId(id, isEnabled = true, type) {
+
     const [rows] = await connPromise.then(conn => conn.execute(
-        `SELECT id, facebook_id, google_id, apple_id, last_name, first_name, email FROM user_social WHERE facebook_id = ${id} and status = ${isEnabled}`
+        `SELECT id, facebook_id, google_id, apple_id, last_name, first_name, email FROM user_social WHERE ${typeMap[type]} = ${id} and status = ${isEnabled}`
     ));
     if (rows) {
         return rows[0];
