@@ -1,11 +1,11 @@
 const passport = require('passport');
 const FacebookStrategy = require('passport-facebook').Strategy;
-const UserService = require('../../services/use-service');
+const UserService = require('../../services/user-service');
 const initPassportFacebook = () => {
   passport.use(new FacebookStrategy({
     // pull in our app id and secret from our auth.js file
-    clientID: process.env.CLIENT_ID,
-    clientSecret: process.env.CLIENT_SECRET,
+    clientID: process.env.CLIENT_ID_FACEBOOK,
+    clientSecret: process.env.CLIENT_SECRET_FACEBOOK,
     callbackURL: `${process.env.DOMAIN}/auth/facebook/callback`,
     profileFields: ['id', 'displayName', 'name', 'gender', 'picture.type(large)', 'email'],
     passReqToCallback: true
@@ -14,31 +14,36 @@ const initPassportFacebook = () => {
     // find current user in UserModel
     let profilePicture = null;
     const userInfo = profile._json;
-    const { id, last_name: lastName, first_name: firstName, email } = userInfo;
+    const { id: facebookId, last_name: lastName, first_name: firstName, email } = userInfo;
     if (userInfo.picture && userInfo.picture.data) {
       profilePicture = userInfo.picture.data.url;
     }
-    console.log({ id, lastName, firstName, email, profilePicture });
-    // const currentUser = await UserService.getUserBySocialId(profile.id, true, 'facebook');
-    // // create new user if the database doesn't have this user
-    // if (!currentUser) {
-    //     const newUser = await UserService.upsertUser({
-    //         last_name: profile._json.name,
-    //         first_name: profile._json.screen_name,
-    //         email: profile._json.id_str,
-    //         facebook_id: profile._json.profile_image_url
-    //     });
-    //     done(null, newUser);
-    // }
-    done(null, profile);
+    // console.log({ facebookId, lastName, firstName, email, profilePicture });
+    // create new user if the database doesn't have this user
+    await UserService.upsertUser({
+      lastName,
+      firstName,
+      email,
+      facebookId
+    });
+    done(null, { lastName, firstName, email, profilePicture });
   }));
-  passport.serializeUser(function (user, done) {
+  passport.serializeUser((user, done) => {
     done(null, user);
   });
-  passport.deserializeUser(function (user, done) {
-    done(null, user);
+  // deserialize the cookieUserId to user in the database
+  passport.deserializeUser(async (user, done) => {
+    try {
+      const userInfo = await UserService.findUserByEmail(user.email, true);
+      if (userInfo) {
+        const { last_name: lastName, first_name: firstName, email, profile_picture: profilePicture } = userInfo;
+        return done(null, { lastName, firstName, email, profilePicture });
+      }
+    } catch (error) {
+      console.log(error);
+      return done(error, null);
+    }
   });
 };
 
-module.exports = initPassportFacebook
-;
+module.exports = initPassportFacebook;

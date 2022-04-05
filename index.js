@@ -17,6 +17,9 @@ app.use(
     maxAge: 24 * 60 * 60 * 100
   })
 );
+app.use(express.json());
+app.use(express.urlencoded());
+
 // parse cookies
 app.use(cookieParser());
 // initalize passport
