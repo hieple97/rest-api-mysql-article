@@ -1,4 +1,4 @@
-const mysql = require("mysql2/promise");
+const mysql = require('mysql2/promise');
 const MYSQL_CONFIG = {
   host: process.env.HOST_DB,
   user: process.env.USERNAME_DB,
@@ -6,9 +6,17 @@ const MYSQL_CONFIG = {
   database: process.env.NAME_DB,
   multipleStatements: true,
   port: 3307
-}
-async function initData(connection) {
-  const createUserTable = `
+};
+
+const query = async (sql, params) => {
+  const connection = await mysql.createConnection(MYSQL_CONFIG);
+  const [results] = await connection.execute(sql, params);
+
+  return results;
+};
+
+const initData = async () => {
+  const createUserTableQueryStr = `
             CREATE TABLE IF NOT EXISTS user_social (
                 id INT NOT NULL AUTO_INCREMENT,
                 facebook_id varchar(255) UNIQUE,
@@ -25,16 +33,15 @@ async function initData(connection) {
             )ENGINE=InnoDB;
 
             `;
-  const [results] = await connection.execute(createUserTable);
-  return results;
-}
+  return query(createUserTableQueryStr);
+};
 
-function connection() {
+const connection = () => {
   return mysql.createConnection(MYSQL_CONFIG);
-}
-
+};
 
 module.exports = {
   connection,
-  initData
+  initData,
+  query
 };

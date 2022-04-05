@@ -1,17 +1,18 @@
 require('dotenv').config();
-const cookieSession = require("cookie-session");
-const express = require("express");
+const cookieSession = require('cookie-session');
+const express = require('express');
 const passport = require('passport');
-const cookieParser = require("cookie-parser");
+const cookieParser = require('cookie-parser');
 const cors = require('cors');
-const keys = require("./config/keys");
+const keys = require('./config/keys');
 const app = express();
 const port = process.env.PORT || 8888;
-const authRoute = require("./routes/auth-route");
+const authRoute = require('./routes/auth-route');
 const initPassportFacebook = require('./controllers/passport-controllers/passport-facebook-controller');
+const { initData } = require('./config/db');
 app.use(
   cookieSession({
-    name: "session",
+    name: 'session',
     keys: [keys.COOKIE_KEY],
     maxAge: 24 * 60 * 60 * 100
   })
@@ -26,7 +27,7 @@ app.use(passport.session());
 app.use(
   cors({
     origin: process.env.CLIENT_HOME_PAGE_URL, // allow to server to accept request from different origin
-    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true // allow session cookie from browser to pass through
   })
 );
@@ -40,22 +41,21 @@ const authCheck = (req, res, next) => {
   if (!req.user) {
     res.status(401).json({
       authenticated: false,
-      message: "user has not been authenticated"
+      message: 'user has not been authenticated'
     });
   } else {
     next();
   }
 };
 
-app.get("/", authCheck, (req, res) => {
+app.get('/', authCheck, (req, res) => {
   res.status(200).json({
     authenticated: true,
-    message: "user successfully authenticated",
+    message: 'user successfully authenticated',
     user: req.user,
     cookies: req.cookies
   });
 });
-
 
 /* Error handler middleware */
 app.use((err, req, res, next) => {
@@ -66,8 +66,7 @@ app.use((err, req, res, next) => {
 
 app.listen(port, async () => {
   console.log(`Example app listening at http://localhost:${port}`);
-  // if (process.env.NODE_ENV === 'production') {
-  //   const conn = await connection();// connect to db
-  //   await initData(conn);
-  // }
+  if (process.env.NODE_ENV === 'production') {
+    await initData();
+  }
 });
